@@ -1,5 +1,5 @@
-<?php
 
+<?php
 /**
  * UserIdentity represents the data needed to identity a user.
  * It contains the authentication method that checks if the provided
@@ -7,27 +7,39 @@
  */
 class UserIdentity extends CUserIdentity
 {
-	/**
-	 * Authenticates a user.
-	 * The example implementation makes sure if the username and password
-	 * are both 'demo'.
-	 * In practical applications, this should be changed to authenticate
-	 * against some persistent user identity storage (e.g. database).
-	 * @return boolean whether authentication succeeds.
-	 */
-	public function authenticate()
-	{
-		$users=array(
-			// username => password
-			'demo'=>'demo',
-			'admin'=>'admin',
-		);
-		if(!isset($users[$this->username]))
-			$this->errorCode=self::ERROR_USERNAME_INVALID;
-		elseif($users[$this->username]!==$this->password)
-			$this->errorCode=self::ERROR_PASSWORD_INVALID;
-		else
-			$this->errorCode=self::ERROR_NONE;
-		return !$this->errorCode;
-	}
+    /**
+     * Authenticates a user.
+     * The example implementation makes sure if the username and password
+     * are both 'demo'.
+     * In practical applications, this should be changed to authenticate
+     * against some persistent user identity storage (e.g. database).
+     * @return boolean whether authentication succeeds.
+     */
+    const ERROR_USERNAME_NOT_ACTIVE = 3;
+    private $_id;
+    public function authenticate()
+    {
+        $user = Usuario::model()->findByAttributes(array('usu_username'=>$this->username));
+        
+        if(!isset($user)){
+            $this->errorCode = self::ERROR_USERNAME_INVALID;
+            //   }elseif ($user->password !== crypt($this->password, $user->password)) {
+        }elseif ($user->usu_password !== $this->password) {
+            /*  $time = rand(1,5);
+              sleep($time);*/
+            $this->errorCode = self::ERROR_PASSWORD_INVALID;
+        }elseif($user->usu_activo == 0){
+            $this->errorCode=self::ERROR_USERNAME_NOT_ACTIVE;
+        }else{
+            $this->_id=$user->usu_id;
+            //$this->setState('tipo_usuario',$user->usuarioTipo->nombre);
+            $this->errorCode = self::ERROR_NONE;
+        }
+        return !$this->errorCode;
+    }
+
+    public function getId()
+    {
+        return $this->_id;
+    }
 }
